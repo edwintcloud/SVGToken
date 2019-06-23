@@ -6,9 +6,11 @@ export default [
   {
     path: '/',
     component: IndexPage,
+    key: 'index',
   },
   {
     path: '/not-found',
     component: NotFoundPage,
+    key: 'not-found',
   },
 ];

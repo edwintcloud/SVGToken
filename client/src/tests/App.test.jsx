@@ -1,8 +1,8 @@
 /* eslint-disable no-undef */
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from '../App';
 import { Drizzle } from 'drizzle';
+import App from '../App';
 import SVGToken from '../contracts/SVGToken.json';
 
 // let drizzle know what contracts we want and how to access our test blockchain

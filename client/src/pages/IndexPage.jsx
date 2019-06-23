@@ -5,7 +5,7 @@ import { ReadString, SetString, Context } from '../components';
 
 // See https://v0.reakit.io/components for a list of components
 
-export default props => {
+export default () => {
   // context is the global state
   const { state, setState } = useContext(Context);
 

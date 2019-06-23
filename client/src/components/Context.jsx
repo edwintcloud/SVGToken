@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 
 export const Context = React.createContext(null);
 
@@ -21,4 +22,13 @@ export const ContextProvider = ({ initialState, children }) => {
       {children}
     </Context.Provider>
   );
+};
+
+ContextProvider.defaultProps = {
+  initialState: {},
+};
+
+ContextProvider.propTypes = {
+  initialState: PropTypes.shape({}),
+  children: PropTypes.node.isRequired,
 };

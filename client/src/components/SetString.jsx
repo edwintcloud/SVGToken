@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
-import { Context } from './Context';
 import { Input } from 'reakit';
+import { Context } from './Context';
 
-export default props => {
+export default () => {
   // context is the global state
   const { state, setState } = useContext(Context);
 
@@ -10,7 +10,7 @@ export default props => {
     // if the enter key is pressed, set the value with the string
     if (e.keyCode === 13) {
       // let drizzle know we want to call the `set` method with `value`
-      const stackId = state.drizzle.contracts.SVGToken.methods['set'].cacheSend(e.target.value, {
+      const stackId = state.drizzle.contracts.SVGToken.methods.set.cacheSend(e.target.value, {
         from: state.drizzleState.accounts[0],
       });
 

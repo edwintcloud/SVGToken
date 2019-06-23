@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Drizzle } from 'drizzle';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
-import { Drizzle } from 'drizzle';
 import SVGToken from './contracts/SVGToken.json';
 
 // let drizzle know what contracts we want and how to access our test blockchain
