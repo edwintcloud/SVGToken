@@ -1,50 +1,26 @@
+/* eslint-disable jsx-a11y/accessible-emoji */
 import React, { useContext } from 'react';
-import { Grid, styled, keyframes, Image, Heading, Box } from 'reakit';
+import { Grid, styled, Box } from 'reakit';
+import { withRouter } from 'react-router-dom';
 import { generate } from 'geopattern';
-import logo from '../static/images/logo.svg';
-import { ReadString, SetString, Context, NavBar, NavLink, GoogleButton, BannerText } from '../components';
+import { Context, NavBar, NavLink, GoogleButton, BannerText } from '../components';
 
 // See https://v0.reakit.io/components for a list of components
 
-export default () => {
+export default withRouter(({ history }) => {
   // context is the global state
-  const { state, setState } = useContext(Context);
+  const { setState } = useContext(Context);
 
-  const tryOpen = () => {
-    if (!state.image) return;
-    const element = window.document.createElement('a');
-    element.setAttribute('href', state.image);
-    element.setAttribute('download', 'text.svg');
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
-  };
-
-  if (!state.drizzleState) {
-    // setup listener
-    state.drizzle.store.subscribe(() => {
-      // every time the store updates, grab the state from drizzle
-      const drizzleState = state.drizzle.store.getState();
-
-      // check to see if it's ready, if so, update global context state
-      if (drizzleState.drizzleStatus.initialized) {
-        setState({
-          drizzleState,
-        });
-      }
+  const googleSignin = res => {
+    const { familyName, givenName } = res.profileObj;
+    setState({
+      currentUser: {
+        firstName: givenName,
+        lastName: familyName,
+      },
     });
-
-    return (
-      <AppGrid textAlign="center">
-        <Logo src={logo} alt="logo" />
-        <Heading>Loading Drizzle...</Heading>
-      </AppGrid>
-    );
-  }
+    history.push('/dashboard');
+  };
 
   return (
     <AppGrid
@@ -58,10 +34,10 @@ export default () => {
           SVGToken
         </NavLink>
         <GoogleButton
-          clientId={process.env.GOOGLE_OAUTH_CLIENT_ID}
+          clientId={process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID}
           uxMode="redirect"
           buttonText="Sign In"
-          onSuccess={() => {}}
+          onSuccess={googleSignin}
           onFailure={err => console.log(err)}
           className="button"
           isSignedIn
@@ -70,36 +46,14 @@ export default () => {
       <Box alignSelf="center" justifySelf="center">
         <BannerText>I heard you can store images on the blockchain 🔗</BannerText>
         <BannerText alt margin="50px 200px">
-          Sign in and find out 🔑
+          I mean sure if you got the gas 💁‍♂️
         </BannerText>
       </Box>
-      {/* <ReadString />
-      <Logo src={logo} alt="logo" />
-      <SetString />
-      {(state.init && 'Please confirm transaction') || state.value}
-      <button type="button" onClick={tryOpen}>
-        Test
-      </button> */}
     </AppGrid>
   );
-};
+});
 
 // Styled Components, Media Queries, and Animations
-
-const LogoSpin = keyframes`
-from {
-  transform: rotate(0deg);
-}
-to {
-  transform: rotate(360deg);
-}
-`;
-
-const Logo = styled(Image)`
-  animation: ${LogoSpin} infinite 20s linear;
-  height: 25vmin;
-  pointer-events: none;
-`;
 
 const AppGrid = styled(Grid)`
   ${props =>

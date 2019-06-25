@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import GoogleLogin from 'react-google-login';
+import { GoogleLogin, GoogleLogout } from 'react-google-login';
 
 export const NavBar = styled.div`
   display: grid;
@@ -49,6 +49,22 @@ export const GoogleButton = styled(GoogleLogin)`
   }
 `;
 
+export const GoogleLogoutButton = styled(GoogleLogout)`
+  justify-content: center;
+  font-size: 1em !important;
+  height: 40px;
+  margin-right: 20px;
+  width: 100px;
+  align-self: center;
+  & > div,
+  & > span {
+    padding: 0 !important;
+  }
+  & > span {
+    line-height: 0;
+  }
+`;
+
 export const BannerText = styled.div`
   display: grid;
   font-weight: 100;
@@ -56,7 +72,6 @@ export const BannerText = styled.div`
   align-self: center;
   color: rgba(0, 0, 0, 0.9);
   position: relative;
-  max-width: 30em;
   justify-self: center;
   background-color: #fff;
   ${props => (props.padding && `padding: ${props.padding};`) || `padding: 30px;`}
@@ -70,7 +85,8 @@ export const BannerText = styled.div`
     width: 0;
     height: 0;
     bottom: 100%;
-    ${props => (props.alt && `left: 1.5em;`) || `right: 1.5em;`}
+    ${props =>
+      (props.alt === 'left' && `left: 1.5em;`) || (props.alt === 'full' && `border: none!important`) || `right: 1.5em;`}
     border: 0.75rem solid transparent;
     border-top: none;
 

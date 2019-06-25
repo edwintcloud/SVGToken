@@ -1,5 +1,5 @@
 // imports
-import { IndexPage, NotFoundPage } from './pages';
+import { IndexPage, NotFoundPage, DashboardPage } from './pages';
 
 // routes
 export default [
@@ -7,6 +7,11 @@ export default [
     path: '/',
     component: IndexPage,
     key: 'index',
+  },
+  {
+    path: '/dashboard',
+    component: DashboardPage,
+    key: 'dashboard',
   },
   {
     path: '/not-found',

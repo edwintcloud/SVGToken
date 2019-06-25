@@ -14,8 +14,8 @@ export default () => {
   const myString = state.drizzleState.contracts.SVGToken.myString[state.dataKey];
 
   useEffect(() => {
-    if (myString && myString.value) {
-      setState({ image: myString.value, init: false });
+    if (myString && myString.value && state.init) {
+      setState({ images: myString.value, init: false });
     }
   }, [myString, setState]);
 
