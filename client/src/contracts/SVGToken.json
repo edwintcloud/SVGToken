@@ -431,12 +431,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x6D9ADeFDF609c13f983A2c9678A96aEDD4CEC99E",
-      "transactionHash": "0x30c86a37bb7fdddc8c76a3a499c3b9d4d400f17d97309970f9ac68f03451fd0d"
+      "address": "0x9618286141930aC023b848C433F10D0857bE8bEE",
+      "transactionHash": "0x54b3cd0db9024af29bccb13112f6972c7468191be6a8013fe97d8c56d52f87fa"
     }
   },
   "schemaVersion": "3.0.11",
-  "updatedAt": "2019-06-23T03:19:24.216Z",
+  "updatedAt": "2019-06-24T21:36:20.560Z",
   "devdoc": {
     "methods": {}
   },

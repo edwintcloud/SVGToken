@@ -4,9 +4,11 @@
   "private": true,
   "dependencies": {
     "drizzle": "^1.4.0",
+    "geopattern": "^1.2.3",
     "prop-types": "^15.7.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
+    "react-google-login": "^5.0.4",
     "react-router-dom": "^5.0.1",
     "react-scripts": "3.0.1",
     "reakit": "^0.16.0",

@@ -1,5 +1,4 @@
-import React, { useContext } from 'react';
-import { Heading } from 'reakit';
+import React, { useContext, useEffect } from 'react';
 import { Context } from './Context';
 
 export default () => {
@@ -14,10 +13,11 @@ export default () => {
   // using the saved `dataKey`, get the variable we're interested in
   const myString = state.drizzleState.contracts.SVGToken.myString[state.dataKey];
 
-  return (
-    <Heading fontWeight={200}>
-      My stored string:
-      {myString && myString.value}
-    </Heading>
-  );
+  useEffect(() => {
+    if (myString && myString.value) {
+      setState({ image: myString.value, init: false });
+    }
+  }, [myString, setState]);
+
+  return <></>;
 };
