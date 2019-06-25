@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { GoogleLogin, GoogleLogout } from 'react-google-login';
+import { Link } from 'react-router-dom';
 
 export const NavBar = styled.div`
   display: grid;
@@ -13,15 +14,16 @@ export const NavBar = styled.div`
   z-index: 1000;
 `;
 
-export const NavLink = styled.a`
+export const NavLink = styled(Link)`
   ${props => props.align && `justify-self: ${props.align};`}
   ${props => props.size && `font-size: ${props.size};`}
   align-self: center;
   color: rgba(255, 255, 255, 0.9);
-  text-decoration: none;
+  text-decoration: none !important;
   cursor: pointer;
   height: 100%;
   display: grid;
+  width: 160px;
   align-items: center;
   ${props => props.padding && `padding: ${props.padding};`}
   ${props => props.cols && `grid-template-columns: ${props.cols};`}

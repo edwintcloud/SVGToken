@@ -12,9 +12,9 @@ export default withRouter(({ history }) => {
   const { state, setState } = useContext(Context);
 
   const tryDownload = () => {
-    if (!state.previewUri) return;
+    if (!state.image) return;
     const element = window.document.createElement('a');
-    element.setAttribute('href', state.previewUri);
+    element.setAttribute('href', state.image);
     element.setAttribute('download', 'text.svg');
 
     element.style.display = 'none';
@@ -63,8 +63,8 @@ export default withRouter(({ history }) => {
     // let drizzle know we want to call the `set` method with `value`
     state.drizzle.contracts.SVGToken.methods.set.cacheSend(state.previewUri, {
       from: state.drizzleState.accounts[0],
-      gas: 6000000,
-      gasPrice: 40000000000,
+      gas: 10000000,
+      gasPrice: 40000000,
     });
     setState({ init: true });
   };
@@ -82,9 +82,16 @@ export default withRouter(({ history }) => {
         });
       }
     });
+
+    setTimeout(() => {
+      if (state.drizzleState) {
+        window.location.reload();
+      }
+    }, 3000);
   }
 
   if (!state.currentUser || !state.drizzleState) {
+    console.log(state);
     return (
       <AppGrid
         image={generate('svg', {
@@ -93,9 +100,10 @@ export default withRouter(({ history }) => {
         }).toDataUri()}
       >
         <NavBar cols="1fr min-content min-content">
-          <NavLink align="left" size="2em" padding="0 20px" cols="40px 1fr">
+          <NavLink align="left" size="2em" padding="0 20px" cols="40px 1fr" to="/">
             SVGToken
           </NavLink>
+
           <GoogleButton
             clientId={process.env.REACT_APP_GOOGLE_OAUTH_CLIENT_ID}
             uxMode="redirect"
@@ -118,7 +126,7 @@ export default withRouter(({ history }) => {
       }).toDataUri()}
     >
       <NavBar cols="1fr min-content min-content">
-        <NavLink align="left" size="2em" padding="0 20px" cols="40px 1fr">
+        <NavLink align="left" size="2em" padding="0 20px" cols="40px 1fr" to="/">
           SVGToken
         </NavLink>
         <GoogleLogoutButton buttonText="Logout" onLogoutSuccess={googleSignout} />
@@ -244,8 +252,42 @@ export default withRouter(({ history }) => {
                   </Grid>
                 </Grid>
               </Tabs.Panel>
-              <Tabs.Panel tab="second" {...tabs}>
-                Second
+              <Tabs.Panel
+                tab="second"
+                {...tabs}
+                width="70%"
+                justifySelf="center"
+                boxShadow="0 0.125rem 0.5rem rgba(0, 0, 0, 0.3), 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2)"
+                borderRadius="3px"
+                marginBottom={30}
+              >
+                <Grid gap={20} marginBottom={30}>
+                  <Grid>
+                    <Paragraph margin="20px 50px 15px 0" fontSize={16}>
+                      {`${state.currentUser.firstName} ${state.currentUser.lastName}`}
+                    </Paragraph>
+                    <Box
+                      justifySelf="center"
+                      width={150}
+                      height={150}
+                      border="1px solid black"
+                      background={state.image && `url(${state.image})`}
+                    />
+                  </Grid>
+                  <Grid justifyContent="center">
+                    <Button
+                      height={50}
+                      width={120}
+                      fontSize={20}
+                      fontWeight={300}
+                      backgroundColor={(state.image && `rgb(61, 17, 132)`) || `rgba(61, 17, 132, 0.3)`}
+                      disabled={!state.image}
+                      onClick={tryDownload}
+                    >
+                      Download
+                    </Button>
+                  </Grid>
+                </Grid>
               </Tabs.Panel>
             </Grid>
           )}

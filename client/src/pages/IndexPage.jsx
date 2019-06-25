@@ -9,7 +9,7 @@ import { Context, NavBar, NavLink, GoogleButton, BannerText } from '../component
 
 export default withRouter(({ history }) => {
   // context is the global state
-  const { setState } = useContext(Context);
+  const { state, setState } = useContext(Context);
 
   const googleSignin = res => {
     const { familyName, givenName } = res.profileObj;
@@ -22,6 +22,21 @@ export default withRouter(({ history }) => {
     history.push('/dashboard');
   };
 
+  if (!state.drizzleState) {
+    // setup listener
+    state.drizzle.store.subscribe(() => {
+      // every time the store updates, grab the state from drizzle
+      const drizzleState = state.drizzle.store.getState();
+
+      // check to see if it's ready, if so, update global context state
+      if (drizzleState.drizzleStatus.initialized) {
+        setState({
+          drizzleState,
+        });
+      }
+    });
+  }
+
   return (
     <AppGrid
       image={generate('svg', {
@@ -30,7 +45,7 @@ export default withRouter(({ history }) => {
       }).toDataUri()}
     >
       <NavBar cols="1fr min-content min-content">
-        <NavLink align="left" size="2em" padding="0 20px" cols="40px 1fr">
+        <NavLink align="left" size="2em" padding="0 20px" cols="40px 1fr" to="/">
           SVGToken
         </NavLink>
         <GoogleButton
@@ -45,8 +60,8 @@ export default withRouter(({ history }) => {
       </NavBar>
       <Box alignSelf="center" justifySelf="center">
         <BannerText>I heard you can store images on the blockchain 🔗</BannerText>
-        <BannerText alt margin="50px 200px">
-          I mean sure if you got the gas 💁‍♂️
+        <BannerText alt="left" margin="50px 200px">
+          I mean sure... if you got the gas 💁‍♂️
         </BannerText>
       </Box>
     </AppGrid>
