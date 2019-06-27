@@ -9,7 +9,7 @@ import { Context, NavBar, NavLink, GoogleButton, BannerText } from '../component
 
 export default withRouter(({ history }) => {
   // context is the global state
-  const { state, setState } = useContext(Context);
+  const { setState } = useContext(Context);
 
   const googleSignin = res => {
     const { familyName, givenName } = res.profileObj;
@@ -21,21 +21,6 @@ export default withRouter(({ history }) => {
     });
     history.push('/dashboard');
   };
-
-  if (!state.drizzleState) {
-    // setup listener
-    state.drizzle.store.subscribe(() => {
-      // every time the store updates, grab the state from drizzle
-      const drizzleState = state.drizzle.store.getState();
-
-      // check to see if it's ready, if so, update global context state
-      if (drizzleState.drizzleStatus.initialized) {
-        setState({
-          drizzleState,
-        });
-      }
-    });
-  }
 
   return (
     <AppGrid

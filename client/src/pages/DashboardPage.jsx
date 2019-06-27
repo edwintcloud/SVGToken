@@ -1,20 +1,60 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Grid, styled, Label, Input, Group, Tabs, Paragraph, Box, Button } from 'reakit';
+import { drizzleReactHooks } from 'drizzle-react';
 import { generate } from 'geopattern';
 import { withRouter } from 'react-router-dom';
-import { ReadString, Context, NavBar, NavLink, GoogleButton, BannerText, GoogleLogoutButton } from '../components';
+import { Context, NavBar, NavLink, GoogleButton, BannerText, GoogleLogoutButton } from '../components';
 
 // See https://v0.reakit.io/components for a list of components
 
 export default withRouter(({ history }) => {
   // context is the global state
   const { state, setState } = useContext(Context);
+  const { drizzle } = drizzleReactHooks.useDrizzle();
+  const contract = drizzle.contracts.SVGToken;
+  const drizzleState = drizzleReactHooks.useDrizzleState(_drizzleState => ({
+    SVGToken: _drizzleState.contracts.SVGToken,
+    account: _drizzleState.accounts[0],
+  }));
+  let images = [];
 
-  const tryDownload = () => {
-    if (!state.image) return;
+  // each time num of images changes, update global state
+  useEffect(() => {
+    if (contract && contract.methods && drizzleState.SVGToken) {
+      const numImagesKey = contract.methods.getNumImages.cacheCall();
+      console.log(numImagesKey);
+      if (drizzleState.SVGToken.getNumImages[numImagesKey]) {
+        const numImages = drizzleState.SVGToken.getNumImages[numImagesKey];
+        for (let i = 0; i < Number(numImages.value); i++) {
+          contract.methods.getSVG.cacheCall(i);
+        }
+      }
+
+      const svgValues = Object.values(drizzleState.SVGToken.getSVG);
+      if (svgValues.length > images.length) {
+        images = [];
+        for (const [key, value] of Object.entries(drizzleState.SVGToken.getSVG)) {
+          images.push(value);
+        }
+      }
+      console.log(images);
+
+      // for (let i = 0; i < numImages; i++) {
+      //   contract.methods.getSVG.cacheCall(i);
+      // }
+    }
+
+    if ((state.images && state.images.length < images.length) || !state.images) {
+      setState({ images });
+    }
+    console.log(contract);
+    console.log(drizzleState);
+  });
+
+  const tryDownload = imageUri => {
     const element = window.document.createElement('a');
-    element.setAttribute('href', state.image);
+    element.setAttribute('href', imageUri);
     element.setAttribute('download', 'text.svg');
 
     element.style.display = 'none';
@@ -48,9 +88,6 @@ export default withRouter(({ history }) => {
     if (color === 'true' || style === 'true') return;
     const { firstName, lastName } = state.currentUser;
     const name = `${firstName} ${lastName}`;
-    console.log(color);
-    console.log(style);
-    console.log(name);
     const uri = generate(name, {
       generator: style,
       color,
@@ -59,39 +96,16 @@ export default withRouter(({ history }) => {
   };
 
   const makePurchase = () => {
-    console.log('ding');
     // let drizzle know we want to call the `set` method with `value`
-    state.drizzle.contracts.SVGToken.methods.set.cacheSend(state.previewUri, {
-      from: state.drizzleState.accounts[0],
-      gas: 10000000,
+    contract.methods.mint.cacheSend(state.previewUri, {
+      from: drizzleState.account,
+      gas: 1000000000,
       gasPrice: 40000000,
     });
     setState({ init: true });
   };
 
-  if (!state.drizzleState) {
-    // setup listener
-    state.drizzle.store.subscribe(() => {
-      // every time the store updates, grab the state from drizzle
-      const drizzleState = state.drizzle.store.getState();
-
-      // check to see if it's ready, if so, update global context state
-      if (drizzleState.drizzleStatus.initialized) {
-        setState({
-          drizzleState,
-        });
-      }
-    });
-
-    setTimeout(() => {
-      if (state.drizzleState) {
-        window.location.reload();
-      }
-    }, 3000);
-  }
-
-  if (!state.currentUser || !state.drizzleState) {
-    console.log(state);
+  if (!state.currentUser) {
     return (
       <AppGrid
         image={generate('svg', {
@@ -129,6 +143,16 @@ export default withRouter(({ history }) => {
         <NavLink align="left" size="2em" padding="0 20px" cols="40px 1fr" to="/">
           SVGToken
         </NavLink>
+        <span
+          style={{
+            whiteSpace: 'pre',
+            marginRight: 20,
+            color: 'white',
+            alignSelf: 'center',
+          }}
+        >
+          {state.currentUser && `${state.currentUser.firstName} ${state.currentUser.lastName}`}
+        </span>
         <GoogleLogoutButton buttonText="Logout" onLogoutSuccess={googleSignout} />
       </NavBar>
       <BannerText
@@ -261,39 +285,45 @@ export default withRouter(({ history }) => {
                 borderRadius="3px"
                 marginBottom={30}
               >
-                <Grid gap={20} marginBottom={30}>
-                  <Grid>
-                    <Paragraph margin="20px 50px 15px 0" fontSize={16}>
-                      {`${state.currentUser.firstName} ${state.currentUser.lastName}`}
-                    </Paragraph>
-                    <Box
-                      justifySelf="center"
-                      width={150}
-                      height={150}
-                      border="1px solid black"
-                      background={state.image && `url(${state.image})`}
-                    />
-                  </Grid>
-                  <Grid justifyContent="center">
-                    <Button
-                      height={50}
-                      width={120}
-                      fontSize={20}
-                      fontWeight={300}
-                      backgroundColor={(state.image && `rgb(61, 17, 132)`) || `rgba(61, 17, 132, 0.3)`}
-                      disabled={!state.image}
-                      onClick={tryDownload}
-                    >
-                      Download
-                    </Button>
-                  </Grid>
+                <Grid
+                  gap={20}
+                  marginBottom={30}
+                  templateColumns="repeat(auto-fit, minmax(150px, 1fr))"
+                  overflowY="auto"
+                  height="50vh"
+                >
+                  {state.images &&
+                    state.images.map(image => (
+                      <Grid margin={15} justifyItems="center">
+                        <Grid justifyItems="center" gap={10} width="min-content">
+                          <Box
+                            justifySelf="center"
+                            width={150}
+                            height={150}
+                            border="1px solid black"
+                            background={image.value && `url(${image.value})`}
+                          />
+
+                          <Button
+                            height={50}
+                            width={120}
+                            fontSize={20}
+                            fontWeight={300}
+                            backgroundColor={(image.value && `rgb(61, 17, 132)`) || `rgba(61, 17, 132, 0.3)`}
+                            disabled={!image.value}
+                            onClick={() => tryDownload(image.value)}
+                          >
+                            Download
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    ))}
                 </Grid>
               </Tabs.Panel>
             </Grid>
           )}
         </Tabs.Container>
       </BannerText>
-      <ReadString />
     </AppGrid>
   );
 });

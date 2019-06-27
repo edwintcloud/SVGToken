@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Drizzle } from 'drizzle';
+import { drizzleReactHooks } from 'drizzle-react';
+import { Drizzle, generateStore } from 'drizzle';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import SVGToken from './contracts/SVGToken.json';
@@ -16,10 +17,15 @@ const options = {
   },
 };
 
-// setup drizzle
-const drizzle = new Drizzle(options);
+const drizzleStore = generateStore(options);
+const drizzle = new Drizzle(options, drizzleStore);
 
-ReactDOM.render(<App drizzle={drizzle} />, document.getElementById('root'));
+ReactDOM.render(
+  <drizzleReactHooks.DrizzleProvider drizzle={drizzle}>
+    <App />
+  </drizzleReactHooks.DrizzleProvider>,
+  document.getElementById('root'),
+);
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
