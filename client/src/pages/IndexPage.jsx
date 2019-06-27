@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Grid, styled, Box } from 'reakit';
 import { withRouter } from 'react-router-dom';
 import { generate } from 'geopattern';
@@ -9,7 +9,13 @@ import { Context, NavBar, NavLink, GoogleButton, BannerText } from '../component
 
 export default withRouter(({ history }) => {
   // context is the global state
-  const { setState } = useContext(Context);
+  const { state, setState } = useContext(Context);
+
+  useEffect(() => {
+    if (state.currentUser) {
+      history.replace('/dashboard');
+    }
+  });
 
   const googleSignin = res => {
     const { familyName, givenName } = res.profileObj;

@@ -1,4 +1,5 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
+/* eslin-disable no-restricted-syntax */
 import React, { useContext, useEffect } from 'react';
 import { Grid, styled, Label, Input, Group, Tabs, Paragraph, Box, Button } from 'reakit';
 import { drizzleReactHooks } from 'drizzle-react';
@@ -21,12 +22,14 @@ export default withRouter(({ history }) => {
 
   // each time num of images changes, update global state
   useEffect(() => {
+    if (!state.currentUser) {
+      history.replace('/');
+    }
     if (contract && contract.methods && drizzleState.SVGToken) {
       const numImagesKey = contract.methods.getNumImages.cacheCall();
-      console.log(numImagesKey);
       if (drizzleState.SVGToken.getNumImages[numImagesKey]) {
         const numImages = drizzleState.SVGToken.getNumImages[numImagesKey];
-        for (let i = 0; i < Number(numImages.value); i++) {
+        for (let i = 0; i < Number(numImages.value); i += 1) {
           contract.methods.getSVG.cacheCall(i);
         }
       }
@@ -35,21 +38,15 @@ export default withRouter(({ history }) => {
       if (svgValues.length > images.length) {
         images = [];
         for (const [key, value] of Object.entries(drizzleState.SVGToken.getSVG)) {
+          if (!key) break;
           images.push(value);
         }
       }
-      console.log(images);
-
-      // for (let i = 0; i < numImages; i++) {
-      //   contract.methods.getSVG.cacheCall(i);
-      // }
     }
 
     if ((state.images && state.images.length < images.length) || !state.images) {
       setState({ images });
     }
-    console.log(contract);
-    console.log(drizzleState);
   });
 
   const tryDownload = imageUri => {
@@ -167,9 +164,9 @@ export default withRouter(({ history }) => {
           {tabs => (
             <Grid
               templateRows="min-content 1fr"
-              backgroundColor="white"
+              backgroundColor="rgba(255, 255, 255, 0.2)"
               height="min-content"
-              width="50vw"
+              width="44vw"
               justifySelf="center"
               alignSelf="center"
               borderRadius={5}
@@ -287,15 +284,17 @@ export default withRouter(({ history }) => {
               >
                 <Grid
                   gap={20}
+                  margin={5}
                   marginBottom={30}
                   templateColumns="repeat(auto-fit, minmax(150px, 1fr))"
                   overflowY="auto"
                   height="50vh"
                 >
-                  {state.images &&
+                  {(state.images &&
+                    state.images.length > 0 &&
                     state.images.map(image => (
                       <Grid margin={15} justifyItems="center">
-                        <Grid justifyItems="center" gap={10} width="min-content">
+                        <Grid justifyItems="center" gap={10} width="min-content" height={220}>
                           <Box
                             justifySelf="center"
                             width={150}
@@ -317,7 +316,7 @@ export default withRouter(({ history }) => {
                           </Button>
                         </Grid>
                       </Grid>
-                    ))}
+                    ))) || <Paragraph alignSelf="center">Nothing to see here... </Paragraph>}
                 </Grid>
               </Tabs.Panel>
             </Grid>
