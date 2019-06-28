@@ -1,11 +1,11 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 /* eslin-disable no-restricted-syntax */
 import React, { useContext, useEffect } from 'react';
-import { Grid, styled, Label, Input, Group, Tabs, Paragraph, Box, Button } from 'reakit';
+import { Grid, styled, Label, Input, Tabs, Paragraph, Box, Button } from 'reakit';
 import { drizzleReactHooks } from 'drizzle-react';
 import { generate } from 'geopattern';
 import { withRouter } from 'react-router-dom';
-import { Context, NavBar, NavLink, GoogleButton, BannerText, GoogleLogoutButton } from '../components';
+import { Context, NavBar, NavLink, GoogleButton, GoogleLogoutButton } from '../components';
 
 // See https://v0.reakit.io/components for a list of components
 
@@ -18,6 +18,10 @@ export default withRouter(({ history }) => {
     SVGToken: _drizzleState.contracts.SVGToken,
     account: _drizzleState.accounts[0],
   }));
+  const baseGen = generate('svg', {
+    generator: 'squares',
+    color: '#7221ff',
+  }).toDataUri();
   let images = [];
 
   // each time num of images changes, update global state
@@ -39,7 +43,15 @@ export default withRouter(({ history }) => {
         images = [];
         for (const [key, value] of Object.entries(drizzleState.SVGToken.getSVG)) {
           if (!key) break;
-          images.push(value);
+          const { name, style, color } = JSON.parse(value.value);
+          const uri = generate(name, {
+            generator: style,
+            color,
+          }).toDataUri();
+          images.push({
+            color,
+            uri,
+          });
         }
       }
     }
@@ -62,6 +74,15 @@ export default withRouter(({ history }) => {
     document.body.removeChild(element);
   };
 
+  const updateSiteTheme = imageData => {
+    setState({
+      previewUri: imageData.uri,
+      genInfo: {
+        color: imageData.color,
+      },
+    });
+  };
+
   const googleSignin = res => {
     const { familyName, givenName } = res.profileObj;
     setState({
@@ -79,7 +100,7 @@ export default withRouter(({ history }) => {
     history.replace('/');
   };
 
-  const generateUri = () => {
+  const generatePreview = () => {
     const color = window.document.getElementById('colorSelect').value;
     const style = window.document.getElementById('styleSelect').value;
     if (color === 'true' || style === 'true') return;
@@ -89,17 +110,26 @@ export default withRouter(({ history }) => {
       generator: style,
       color,
     }).toDataUri();
-    setState({ previewUri: uri });
+    setState({
+      previewUri: uri,
+      genInfo: {
+        name,
+        color,
+        style,
+      },
+    });
   };
 
   const makePurchase = () => {
+    if (!drizzleState.account || !state.genInfo) return;
     // let drizzle know we want to call the `set` method with `value`
-    contract.methods.mint.cacheSend(state.previewUri, {
+    contract.methods.mint.cacheSend(JSON.stringify(state.genInfo), {
       from: drizzleState.account,
-      gas: 1000000000,
-      gasPrice: 40000000,
+      // gas: 7001102,
+      // gasPrice: 500000000,
+      gas: 700000,
+      gasPrice: 5000000000,
     });
-    setState({ init: true });
   };
 
   if (!state.currentUser) {
@@ -130,13 +160,8 @@ export default withRouter(({ history }) => {
   }
 
   return (
-    <AppGrid
-      image={generate('svg', {
-        generator: 'squares',
-        color: '#7221ff',
-      }).toDataUri()}
-    >
-      <NavBar cols="1fr min-content min-content">
+    <AppGrid image={(state.previewUri && state.previewUri) || baseGen}>
+      <NavBar cols="1fr min-content min-content" color={(state.genInfo && state.genInfo.color) || null}>
         <NavLink align="left" size="2em" padding="0 20px" cols="40px 1fr" to="/">
           SVGToken
         </NavLink>
@@ -152,177 +177,164 @@ export default withRouter(({ history }) => {
         </span>
         <GoogleLogoutButton buttonText="Logout" onLogoutSuccess={googleSignout} />
       </NavBar>
-      <BannerText
-        alt="full"
-        style={{
-          height: '76vh',
-          width: '90vw',
-          background: state.previewUri && `url(${state.previewUri})`,
-        }}
-      >
-        <Tabs.Container>
-          {tabs => (
-            <Grid
-              templateRows="min-content 1fr"
-              backgroundColor="rgba(255, 255, 255, 0.2)"
-              height="min-content"
-              width="44vw"
+      <Tabs.Container>
+        {tabs => (
+          <Grid
+            templateRows="min-content 1fr"
+            justifySelf="center"
+            alignSelf="center"
+            borderRadius={5}
+            gap={15}
+            backgroundColor="white"
+          >
+            <Tabs marginTop={10}>
+              <Tabs.Tab tab="first" {...tabs}>
+                Generate
+              </Tabs.Tab>
+              <Tabs.Tab tab="second" {...tabs}>
+                Owned
+              </Tabs.Tab>
+            </Tabs>
+            <Tabs.Panel
+              tab="first"
+              {...tabs}
+              padding="15px 30px 25px 30px"
               justifySelf="center"
-              alignSelf="center"
-              borderRadius={5}
-              gap={10}
+              boxShadow="0 0.125rem 0.5rem rgba(0, 0, 0, 0.3), 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2)"
+              borderRadius="3px"
             >
-              <Tabs>
-                <Tabs.Tab tab="first" {...tabs}>
-                  Generate
-                </Tabs.Tab>
-                <Tabs.Tab tab="second" {...tabs}>
-                  Owned
-                </Tabs.Tab>
-              </Tabs>
-              <Tabs.Panel
-                tab="first"
-                {...tabs}
-                width="70%"
-                justifySelf="center"
-                boxShadow="0 0.125rem 0.5rem rgba(0, 0, 0, 0.3), 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2)"
-                borderRadius="3px"
-                marginBottom={30}
-              >
-                <Grid gap={20} marginBottom={30}>
-                  <Grid>
-                    <Paragraph margin="20px 90px 15px 0" fontSize={16}>
-                      Preview
-                    </Paragraph>
-                    <Box
-                      justifySelf="center"
-                      width={150}
-                      height={150}
-                      border="1px solid black"
-                      background={state.previewUri && `url(${state.previewUri})`}
-                    />
-                  </Grid>
+              <Grid gap={30}>
+                <Grid templateColumns="min-content 1fr" alignItems="center">
+                  <Paragraph margin="20px 90px 15px 0" fontSize={16}>
+                    Preview:
+                  </Paragraph>
+                  <Box
+                    justifySelf="center"
+                    width={150}
+                    height={150}
+                    border="1px solid black"
+                    background={state.previewUri && `url(${state.previewUri})`}
+                  />
+                </Grid>
 
-                  <Grid>
-                    <Group margin="15px 30px" justifySelf="center">
-                      <Label htmlFor="styleSelect" alignSelf="center" marginRight={40}>
-                        Style:
-                      </Label>
-                      <Input use="select" id="styleSelect" height={40} width={200} onChange={generateUri} fontSize={20}>
-                        <option disabled selected value>
-                          -- select an option --
-                        </option>
-                        <option value="chevrons">Chevrons</option>
-                        <option value="overlappingCircles">Overlapping Circles</option>
-                        <option value="plusSigns">Plus Signs</option>
-                        <option value="xes">XES</option>
-                        <option value="sineWaves">Sine Waves</option>
-                        <option value="hexagons">Hexagons</option>
-                        <option value="overlappingRings">Overlapping Rings</option>
-                        <option value="plaid">Plaid</option>
-                        <option value="triangles">Triangles</option>
-                        <option value="squares">Squares</option>
-                        <option value="nestedSquares">Nested Squares</option>
-                        <option value="mosaicSquares">Mosaic Squares</option>
-                        <option value="concentricCircles">Concentric Circles</option>
-                        <option value="diamonds">Diamonds</option>
-                        <option value="tessellation">Tessellation</option>
-                      </Input>
-                    </Group>
-                  </Grid>
-                  <Grid>
-                    <Group margin="15px 30px" justifySelf="center">
-                      <Label htmlFor="colorSelect" alignSelf="center" marginRight={40}>
-                        Color:
-                      </Label>
-                      <Input use="select" id="colorSelect" height={40} width={200} onChange={generateUri} fontSize={20}>
-                        <option disabled selected value>
-                          -- select an option --
-                        </option>
-                        <option value="#103880">Navy</option>
-                        <option value="#2E73FC">Blue</option>
-                        <option value="#1AF9FE">Aqua</option>
-                        <option value="#0B8080">Teal</option>
-                        <option value="#808014">Olive</option>
-                        <option value="#30800F">Green</option>
-                        <option value="#5AE424">Lime</option>
-                        <option value="#FCEB2F">Yellow</option>
-                        <option value="#FFA625">Orange</option>
-                        <option value="#FE431C">Red</option>
-                        <option value="#801D08">Maroon</option>
-                        <option value="#F382FD">Fuschia</option>
-                        <option value="#823F80">Purple</option>
-                        <option value="#C1C1C1">Silver</option>
-                        <option value="#808080">Gray</option>
-                        <option value="#000000">Black</option>
-                      </Input>
-                    </Group>
-                  </Grid>
-                  <Grid justifyContent="center">
-                    <Button
-                      height={50}
-                      width={120}
-                      fontSize={20}
-                      fontWeight={300}
-                      backgroundColor={(state.previewUri && `rgb(61, 17, 132)`) || `rgba(61, 17, 132, 0.3)`}
-                      disabled={!state.previewUri}
-                      onClick={makePurchase}
-                    >
-                      Purchase
-                    </Button>
+                <Grid>
+                  <Grid templateColumns="min-content 1fr">
+                    <Label htmlFor="styleSelect" alignSelf="center" marginRight={40}>
+                      Style:
+                    </Label>
+                    <Input use="select" id="styleSelect" onChange={generatePreview}>
+                      <option disabled selected value>
+                        -- select an option --
+                      </option>
+                      <option value="chevrons">Chevrons</option>
+                      <option value="overlappingCircles">Overlapping Circles</option>
+                      <option value="plusSigns">Plus Signs</option>
+                      <option value="xes">XES</option>
+                      <option value="sineWaves">Sine Waves</option>
+                      <option value="hexagons">Hexagons</option>
+                      <option value="overlappingRings">Overlapping Rings</option>
+                      <option value="plaid">Plaid</option>
+                      <option value="triangles">Triangles</option>
+                      <option value="squares">Squares</option>
+                      <option value="nestedSquares">Nested Squares</option>
+                      <option value="mosaicSquares">Mosaic Squares</option>
+                      <option value="concentricCircles">Concentric Circles</option>
+                      <option value="diamonds">Diamonds</option>
+                      <option value="tessellation">Tessellation</option>
+                    </Input>
                   </Grid>
                 </Grid>
-              </Tabs.Panel>
-              <Tabs.Panel
-                tab="second"
-                {...tabs}
-                width="70%"
-                justifySelf="center"
-                boxShadow="0 0.125rem 0.5rem rgba(0, 0, 0, 0.3), 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2)"
-                borderRadius="3px"
-                marginBottom={30}
+                <Grid>
+                  <Grid templateColumns="min-content 1fr">
+                    <Label htmlFor="colorSelect" alignSelf="center" marginRight={40}>
+                      Color:
+                    </Label>
+                    <Input use="select" id="colorSelect" onChange={generatePreview}>
+                      <option disabled selected value>
+                        -- select an option --
+                      </option>
+                      <option value="#103880">Navy</option>
+                      <option value="#2E73FC">Blue</option>
+                      <option value="#1AF9FE">Aqua</option>
+                      <option value="#0B8080">Teal</option>
+                      <option value="#808014">Olive</option>
+                      <option value="#30800F">Green</option>
+                      <option value="#5AE424">Lime</option>
+                      <option value="#FCEB2F">Yellow</option>
+                      <option value="#FFA625">Orange</option>
+                      <option value="#FE431C">Red</option>
+                      <option value="#801D08">Maroon</option>
+                      <option value="#F382FD">Fuschia</option>
+                      <option value="#823F80">Purple</option>
+                      <option value="#C1C1C1">Silver</option>
+                      <option value="#808080">Gray</option>
+                      <option value="#000000">Black</option>
+                    </Input>
+                  </Grid>
+                </Grid>
+                <Grid justifyContent="center">
+                  <Button
+                    height={50}
+                    width={120}
+                    fontSize={20}
+                    fontWeight={300}
+                    backgroundColor={(state.previewUri && `rgb(61, 17, 132)`) || `rgba(61, 17, 132, 0.3)`}
+                    disabled={!state.previewUri}
+                    onClick={makePurchase}
+                  >
+                    Purchase
+                  </Button>
+                </Grid>
+              </Grid>
+            </Tabs.Panel>
+            <Tabs.Panel
+              tab="second"
+              {...tabs}
+              justifySelf="center"
+              boxShadow="0 0.125rem 0.5rem rgba(0, 0, 0, 0.3), 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.2)"
+              borderRadius="3px"
+            >
+              <Grid
+                gap={20}
+                margin={5}
+                templateColumns="repeat(auto-fit, minmax(150px, 1fr))"
+                overflowY="auto"
+                height="50vh"
+                width="50vw"
               >
-                <Grid
-                  gap={20}
-                  margin={5}
-                  marginBottom={30}
-                  templateColumns="repeat(auto-fit, minmax(150px, 1fr))"
-                  overflowY="auto"
-                  height="50vh"
-                >
-                  {(state.images &&
-                    state.images.length > 0 &&
-                    state.images.map(image => (
-                      <Grid margin={15} justifyItems="center">
-                        <Grid justifyItems="center" gap={10} width="min-content" height={220}>
-                          <Box
-                            justifySelf="center"
-                            width={150}
-                            height={150}
-                            border="1px solid black"
-                            background={image.value && `url(${image.value})`}
-                          />
+                {(state.images &&
+                  state.images.length > 0 &&
+                  state.images.map(imageData => (
+                    <Grid margin={15} justifyItems="center">
+                      <Grid justifyItems="center" gap={10} width="min-content" height={220}>
+                        <Box
+                          justifySelf="center"
+                          width={150}
+                          height={150}
+                          border="1px solid black"
+                          background={`url(${imageData.uri})`}
+                          onClick={() => updateSiteTheme(imageData)}
+                          cursor="pointer"
+                        />
 
-                          <Button
-                            height={50}
-                            width={120}
-                            fontSize={20}
-                            fontWeight={300}
-                            backgroundColor={(image.value && `rgb(61, 17, 132)`) || `rgba(61, 17, 132, 0.3)`}
-                            disabled={!image.value}
-                            onClick={() => tryDownload(image.value)}
-                          >
-                            Download
-                          </Button>
-                        </Grid>
+                        <Button
+                          height={50}
+                          width={120}
+                          fontSize={20}
+                          fontWeight={300}
+                          backgroundColor="rgba(61, 17, 132, 1)"
+                          onClick={() => tryDownload(imageData.uri)}
+                        >
+                          Download
+                        </Button>
                       </Grid>
-                    ))) || <Paragraph alignSelf="center">Nothing to see here... </Paragraph>}
-                </Grid>
-              </Tabs.Panel>
-            </Grid>
-          )}
-        </Tabs.Container>
-      </BannerText>
+                    </Grid>
+                  ))) || <Paragraph alignSelf="center">Nothing to see here... </Paragraph>}
+              </Grid>
+            </Tabs.Panel>
+          </Grid>
+        )}
+      </Tabs.Container>
     </AppGrid>
   );
 });

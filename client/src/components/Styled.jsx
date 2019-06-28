@@ -2,13 +2,25 @@ import styled from 'styled-components';
 import { GoogleLogin, GoogleLogout } from 'react-google-login';
 import { Link } from 'react-router-dom';
 
+const hexToRgba = hex => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? `rgba(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}, 0.8);`
+    : null;
+};
+
 export const NavBar = styled.div`
   display: grid;
   ${props => props.cols && `grid-template-columns: ${props.cols};`}
   position: fixed;
   top: 0;
   left: 0;
-  background-color: rgba(61, 17, 132, 0.8);
+  ${props =>
+    (props.color &&
+      `background-color: ${hexToRgba(props.color)};
+    
+  `) ||
+    `background-color: rgba(61, 17, 132, 0.8);`}
   height: 60px;
   width: 100vw;
   z-index: 1000;
@@ -28,7 +40,7 @@ export const NavLink = styled(Link)`
   ${props => props.padding && `padding: ${props.padding};`}
   ${props => props.cols && `grid-template-columns: ${props.cols};`}
   :hover {
-    background-color: hsla(0, 0%, 2%, 0.6);
+    background-color: hsla(0, 0%, 2%, 0.3);
   }
   @media (max-width: 768px) {
     padding: 0 15px;
